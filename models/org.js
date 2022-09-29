@@ -129,7 +129,7 @@ if (Meteor.isServer) {
         check(orgWebsite, String);
         check(orgIsActive, Boolean);
 
-        const nOrgNames = Org.find({ orgShortName }).count();
+        const nOrgNames = Org.find({ orgShortName }).estimatedDocumentCount();
         if (nOrgNames > 0) {
           throw new Meteor.Error('orgname-already-taken');
         } else {
@@ -156,7 +156,7 @@ if (Meteor.isServer) {
       check(orgWebsite, String);
       check(orgIsActive, Boolean);
 
-      const nOrgNames = Org.find({ orgShortName }).count();
+      const nOrgNames = Org.find({ orgShortName }).estimatedDocumentCount();
       if (nOrgNames > 0) {
         throw new Meteor.Error('orgname-already-taken');
       } else {

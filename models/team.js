@@ -127,7 +127,7 @@ if (Meteor.isServer) {
         check(teamWebsite, String);
         check(teamIsActive, Boolean);
 
-        const nTeamNames = Team.find({ teamShortName }).count();
+        const nTeamNames = Team.find({ teamShortName }).estimatedDocumentCount();
         if (nTeamNames > 0) {
           throw new Meteor.Error('teamname-already-taken');
         } else {
@@ -153,7 +153,7 @@ if (Meteor.isServer) {
       check(teamShortName, String);
       check(teamWebsite, String);
       check(teamIsActive, Boolean);
-      const nTeamNames = Team.find({ teamShortName }).count();
+      const nTeamNames = Team.find({ teamShortName }).estimatedDocumentCount();
       if (nTeamNames > 0) {
         throw new Meteor.Error('teamname-already-taken');
       } else {

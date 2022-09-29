@@ -563,7 +563,7 @@ if (Meteor.isServer) {
       const id = Lists.insert({
         title: req.body.title,
         boardId: paramBoardId,
-        sort: board.lists().count(),
+        sort: board.lists().estimatedDocumentCount(),
       });
       JsonRoutes.sendResult(res, {
         code: 200,

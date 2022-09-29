@@ -516,7 +516,7 @@ Users.allow({
   remove(userId, doc) {
     const adminsNumber = Users.find({
       isAdmin: true,
-    }).count();
+    }).estimatedDocumentCount();
     const { isAdmin } = Users.findOne(
       {
         _id: userId,
@@ -1237,10 +1237,10 @@ if (Meteor.isServer) {
       if (Meteor.user() && Meteor.user().isAdmin) {
         const nUsersWithUsername = Users.find({
           username,
-        }).count();
+        }).estimatedDocumentCount();
         const nUsersWithEmail = Users.find({
           email,
-        }).count();
+        }).estimatedDocumentCount();
         if (nUsersWithUsername > 0) {
           throw new Meteor.Error('username-already-taken');
         } else if (nUsersWithEmail > 0) {
@@ -1279,7 +1279,7 @@ if (Meteor.isServer) {
       if (Meteor.user() && Meteor.user().isAdmin) {
         const nUsersWithUsername = Users.find({
           username,
-        }).count();
+        }).estimatedDocumentCount();
         if (nUsersWithUsername > 0) {
           throw new Meteor.Error('username-already-taken');
         } else {
@@ -1592,7 +1592,7 @@ if (Meteor.isServer) {
     },
   });
   Accounts.onCreateUser((options, user) => {
-    const userCount = Users.find().count();
+    const userCount = Users.find().estimadDocumentCount();
     if (userCount === 0) {
       user.isAdmin = true;
     }

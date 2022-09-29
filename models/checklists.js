@@ -81,7 +81,7 @@ Checklists.helpers({
   },
 
   itemCount() {
-    return ChecklistItems.find({ checklistId: this._id }).count();
+    return ChecklistItems.find({ checklistId: this._id }).estimatedDocumentCount();
   },
   items() {
     return ChecklistItems.find(
@@ -100,12 +100,12 @@ Checklists.helpers({
     return ChecklistItems.find({
       checklistId: this._id,
       isFinished: true,
-    }).count();
+    }).estimatedDocumentCount();
   },
   /** returns the finished percent of the checklist */
   finishedPercent() {
     const checklistItems = ChecklistItems.find({ checklistId: this._id });
-    const count = checklistItems.count();
+    const count = checklistItems.estimatedDocumentCount();
     const checklistItemsFinished = checklistItems.fetch().filter(checklistItem => checklistItem.isFinished);
 
     let ret = 0;

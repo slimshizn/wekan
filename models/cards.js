@@ -877,17 +877,17 @@ Cards.helpers({
 
   subtasksCount() {
     const subtasks = this.subtasks();
-    return subtasks.count();
+    return subtasks.estimatedDocumentCount();
   },
 
   subtasksFinishedCount() {
     const subtasksArchived = this.subtasksFinished();
-    return subtasksArchived.count();
+    return subtasksArchived.estimatedDocumentCount();
   },
 
   allSubtasksCount() {
     const allSubtasks = this.allSubtasks();
-    return allSubtasks.count();
+    return allSubtasks.estimatedDocumentCount();
   },
 
   allowsSubtasks() {
@@ -976,7 +976,7 @@ Cards.helpers({
     if (
       !list.getWipLimit('soft') &&
       list.getWipLimit('enabled') &&
-      list.getWipLimit('value') === list.cards().count()
+      list.getWipLimit('value') === list.cards().estimatedDocumentCount()
     ) {
       return false;
     }
@@ -3350,7 +3350,7 @@ if (Meteor.isServer) {
         description: req.body.description,
         userId: req.body.authorId,
         swimlaneId: req.body.swimlaneId,
-        sort: currentCards.count(),
+        sort: currentCards.estimatedDocumentCount(),
         cardNumber: nextCardNumber,
         members,
         assignees,
@@ -3393,7 +3393,7 @@ JsonRoutes.add('GET', '/api/boards/:boardId/cards_count', function(
         board_cards_count: Cards.find({
           boardId: paramBoardId,
           archived: false,
-        }).count(),
+        }).estimatedDocumentCount(),
       }
     });
   } catch (error) {
@@ -3427,7 +3427,7 @@ JsonRoutes.add('GET', '/api/boards/:boardId/cards_count', function(
             boardId: paramBoardId,
             listId: paramListId,
             archived: false,
-          }).count(),
+          }).estimatedDocumentCount(),
         }
       });
     } catch (error) {

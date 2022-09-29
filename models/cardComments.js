@@ -168,7 +168,7 @@ CardComments.textSearch = (userId, textArray) => {
 
   const comments = CardComments.find(selector);
   // eslint-disable-next-line no-console
-  // console.log('count:', comments.count());
+  // console.log('count:', comments.estimatedDocumentCount());
   // eslint-disable-next-line no-console
   // console.log('cards with comments:', comments.map(com => { return com.cardId }));
 

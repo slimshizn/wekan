@@ -244,7 +244,7 @@ function buildSelector(queryParams) {
         const boards = Boards.userSearch(userId, {
           title: new RegExp(escapeForRegex(query), 'i'),
         });
-        if (boards.count()) {
+        if (boards.estimatedDocumentCount()) {
           boards.forEach(board => {
             queryBoards.push(board._id);
           });
@@ -262,7 +262,7 @@ function buildSelector(queryParams) {
         const swimlanes = Swimlanes.find({
           title: new RegExp(escapeForRegex(query), 'i'),
         });
-        if (swimlanes.count()) {
+        if (swimlanes.estimatedDocumentCount()) {
           swimlanes.forEach(swim => {
             querySwimlanes.push(swim._id);
           });
@@ -284,7 +284,7 @@ function buildSelector(queryParams) {
         const lists = Lists.find({
           title: new RegExp(escapeForRegex(query), 'i'),
         });
-        if (lists.count()) {
+        if (lists.estimatedDocumentCount()) {
           lists.forEach(list => {
             queryLists.push(list._id);
           });
@@ -371,7 +371,7 @@ function buildSelector(queryParams) {
           labels: { $elemMatch: { color: label.toLowerCase() } },
         });
 
-        if (boards.count()) {
+        if (boards.estimatedDocumentCount()) {
           boards.forEach(board => {
             // eslint-disable-next-line no-console
             // console.log('board:', board);
@@ -395,7 +395,7 @@ function buildSelector(queryParams) {
             labels: { $elemMatch: { name: reLabel } },
           });
 
-          if (boards.count()) {
+          if (boards.estimatedDocumentCount()) {
             boards.forEach(board => {
               board.labels
                 .filter(boardLabel => {
@@ -673,7 +673,7 @@ function findCards(sessionId, query) {
 
   const cards = Cards.find(query.selector, query.projection);
   // eslint-disable-next-line no-console
-  // console.log('count:', cards.count());
+  // console.log('count:', cards.estimatedDocumentCount());
 
   const update = {
     $set: {
@@ -689,11 +689,11 @@ function findCards(sessionId, query) {
   };
 
   if (cards) {
-    update.$set.totalHits = cards.count();
+    update.$set.totalHits = cards.estimatedDocumentCount();
     update.$set.lastHit =
-      query.projection.skip + query.projection.limit < cards.count()
+      query.projection.skip + query.projection.limit < cards.estimatedDocumentCount()
         ? query.projection.skip + query.projection.limit
-        : cards.count();
+        : cards.estimatedDocumentCount();
     update.$set.cards = cards.map(card => {
       return card._id;
     });

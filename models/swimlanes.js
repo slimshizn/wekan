@@ -355,7 +355,7 @@ if (Meteor.isServer) {
       { sort: ['sort'] },
     );
 
-    if (lists.count() < 2) {
+    if (lists.estimatedDocumentCount() < 2) {
       lists.forEach(list => {
         list.remove();
       });
@@ -471,7 +471,7 @@ if (Meteor.isServer) {
       const id = Swimlanes.insert({
         title: req.body.title,
         boardId: paramBoardId,
-        sort: board.swimlanes().count(),
+        sort: board.swimlanes().estimatedDocumentCount(),
       });
       JsonRoutes.sendResult(res, {
         code: 200,

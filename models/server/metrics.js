@@ -55,7 +55,7 @@ Meteor.startup(() => {
         metricsRes += '# Number of registered users\n';
 
         // To Do: Get number of registered user
-        resCount = Users.find({}).count(); // KPI 2
+        resCount = Users.find({}).estimatedDocumentCount(); // KPI 2
         metricsRes += 'registeredUsers ' + resCount + '\n';
         resCount = 0;
 
@@ -63,7 +63,7 @@ Meteor.startup(() => {
         metricsRes += '# Number of registered boards\n';
 
         // To Do: Get number of registered boards
-        resCount = Boards.find({ archived: false, type: 'board' }).count(); // KPI 3
+        resCount = Boards.find({ archived: false, type: 'board' }).estimatedDocumentCount(); // KPI 3
         metricsRes += 'registeredboards ' + resCount + '\n';
         resCount = 0;
 
@@ -72,8 +72,8 @@ Meteor.startup(() => {
 
         // To Do: Get number of registered boards by registered users
         resCount =
-          Boards.find({ archived: false, type: 'board' }).count() /
-          Users.find({}).count(); // KPI 4
+          Boards.find({ archived: false, type: 'board' }).estimatedDocumentCount() /
+          Users.find({}).estimatedDocumentCount(); // KPI 4
         metricsRes += 'registeredboardsBysRegisteredUsers ' + resCount + '\n';
         resCount = 0;
 
@@ -85,7 +85,7 @@ Meteor.startup(() => {
           archived: false,
           type: 'board',
           members: { $size: 1 },
-        }).count(); // KPI 5
+        }).estimatedDocumentCount(); // KPI 5
         metricsRes += 'registeredboardsWithOnlyOneMember ' + resCount + '\n';
         resCount = 0;
 
@@ -105,7 +105,7 @@ Meteor.startup(() => {
         //console.log({ dateWithXdaysAgo });
         resCount = Users.find({
           lastConnectionDate: { $gte: dateWithXdaysAgo },
-        }).count(); // KPI 5
+        }).estimatedDocumentCount(); // KPI 5
         metricsRes += 'usersWithLastConnectionDated5DaysAgo ' + resCount + '\n';
         resCount = 0;
 
@@ -118,7 +118,7 @@ Meteor.startup(() => {
         //console.log({ dateWithXdaysAgo });
         resCount = Users.find({
           lastConnectionDate: { $gte: dateWithXdaysAgo },
-        }).count(); // KPI 5
+        }).estimatedDocumentCount(); // KPI 5
         metricsRes +=
           'usersWithLastConnectionDated10DaysAgo ' + resCount + '\n';
         resCount = 0;
@@ -132,7 +132,7 @@ Meteor.startup(() => {
         //console.log({ dateWithXdaysAgo });
         resCount = Users.find({
           lastConnectionDate: { $gte: dateWithXdaysAgo },
-        }).count(); // KPI 5
+        }).estimatedDocumentCount(); // KPI 5
         metricsRes +=
           'usersWithLastConnectionDated20DaysAgo ' + resCount + '\n';
         resCount = 0;
@@ -146,7 +146,7 @@ Meteor.startup(() => {
         //console.log({ dateWithXdaysAgo });
         resCount = Users.find({
           lastConnectionDate: { $gte: dateWithXdaysAgo },
-        }).count(); // KPI 5
+        }).estimatedDocumentCount(); // KPI 5
         metricsRes +=
           'usersWithLastConnectionDated30DaysAgo ' + resCount + '\n';
         resCount = 0;

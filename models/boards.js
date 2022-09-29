@@ -815,7 +815,7 @@ Boards.helpers({
     let allMembers = members;
     if(this.teams !== undefined && this.teams.length > 0){
       let index;
-      if(boardTeamUsers && boardTeamUsers.count() > 0){
+      if(boardTeamUsers && boardTeamUsers.estimatedDocumentCount() > 0){
         boardTeamUsers.forEach((u) => {
           index = allMembers.findIndex(function(m){ return m.userId == u._id});
           if(index == -1){
@@ -1502,7 +1502,7 @@ Boards.uniqueTitle = title => {
   const base = escapeForRegex(m.groups.title);
   const baseTitle = m.groups.title;
   boards = Boards.find({ title: new RegExp(`^${base}\\s*(\\[(?<num>\\d+)]\\s*$|\\s*$)`) });
-  if (boards.count() > 0) {
+  if (boards.estimatedDocumentCount() > 0) {
     let num = 0;
     Boards.find({ title: new RegExp(`^${base}\\s*\\[\\d+]\\s*$`) }).forEach(
       board => {
@@ -1981,8 +1981,8 @@ if (Meteor.isServer) {
       JsonRoutes.sendResult(res, {
         code: 200,
         data: {
-          private: Boards.find({ permission: 'private' }).count(),
-          public: Boards.find({ permission: 'public' }).count(),
+          private: Boards.find({ permission: 'private' }).estimatedDocumentCount(),
+          public: Boards.find({ permission: 'public' }).estimatedDocumentCount(),
         },
       });
     } catch (error) {

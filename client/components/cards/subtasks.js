@@ -1,13 +1,4 @@
-BlazeComponent.extendComponent({
-  canModifyCard() {
-    return (
-      Meteor.user() &&
-      Meteor.user().isBoardMember() &&
-      !Meteor.user().isCommentOnly() &&
-      !Meteor.user().isWorker()
-    );
-  },
-}).register('subtaskDetail');
+import { ReactiveCache } from '/imports/reactiveCache';
 
 BlazeComponent.extendComponent({
   addSubtask(event) {
@@ -15,19 +6,19 @@ BlazeComponent.extendComponent({
     const textarea = this.find('textarea.js-add-subtask-item');
     const title = textarea.value.trim();
     const cardId = this.currentData().cardId;
-    const card = Cards.findOne(cardId);
+    const card = ReactiveCache.getCard(cardId);
     const sortIndex = -1;
-    const crtBoard = Boards.findOne(card.boardId);
+    const crtBoard = ReactiveCache.getBoard(card.boardId);
     const targetBoard = crtBoard.getDefaultSubtasksBoard();
     const listId = targetBoard.getDefaultSubtasksListId();
 
     //Get the full swimlane data for the parent task.
-    const parentSwimlane = Swimlanes.findOne({
+    const parentSwimlane = ReactiveCache.getSwimlane({
       boardId: crtBoard._id,
       _id: card.swimlaneId,
     });
     //find the swimlane of the same name in the target board.
-    const targetSwimlane = Swimlanes.findOne({
+    const targetSwimlane = ReactiveCache.getSwimlane({
       boardId: targetBoard._id,
       title: parentSwimlane.title,
     });
@@ -70,20 +61,15 @@ BlazeComponent.extendComponent({
     textarea.focus();
   },
 
-  canModifyCard() {
-    return (
-      Meteor.user() &&
-      Meteor.user().isBoardMember() &&
-      !Meteor.user().isCommentOnly() &&
-      !Meteor.user().isWorker()
-    );
-  },
-
   deleteSubtask() {
     const subtask = this.currentData().subtask;
     if (subtask && subtask._id) {
       subtask.archive();
     }
+  },
+
+  isBoardAdmin() {
+    return ReactiveCache.getCurrentUser().isBoardAdmin();
   },
 
   editSubtask(event) {
@@ -117,22 +103,14 @@ BlazeComponent.extendComponent({
   },
 }).register('subtasks');
 
-Template.subtaskItemDetail.helpers({
-  canModifyCard() {
-    return (
-      Meteor.user() &&
-      Meteor.user().isBoardMember() &&
-      !Meteor.user().isCommentOnly() &&
-      !Meteor.user().isWorker()
-    );
-  },
-});
-
 BlazeComponent.extendComponent({
   // ...
 }).register('subtaskItemDetail');
 
 BlazeComponent.extendComponent({
+  isBoardAdmin() {
+    return ReactiveCache.getCurrentUser().isBoardAdmin();
+  },
   events() {
     return [
       {
@@ -158,3 +136,14 @@ BlazeComponent.extendComponent({
     ]
   }
 }).register('subtaskActionsPopup');
+
+Template.editSubtaskItemForm.helpers({
+  user() {
+    return ReactiveCache.getUser(this.userId);
+  },
+  isBoardAdmin() {
+    return ReactiveCache.getCurrentUser().isBoardAdmin();
+  },
+});
+
+

@@ -1,3 +1,4 @@
+import { ReactiveCache } from '/imports/reactiveCache';
 import moment from 'moment/min/moment-with-locales';
 import { TAPi18n } from '/imports/i18n';
 import { DatePicker } from '/client/lib/datepicker';
@@ -63,39 +64,34 @@ BlazeComponent.extendComponent({
   },
 
   hiddenSystemMessages() {
-    return Meteor.user().hasHiddenSystemMessages();
+    return ReactiveCache.getCurrentUser().hasHiddenSystemMessages();
   },
 
   customFieldsGrid() {
-    return Meteor.user().hasCustomFieldsGrid();
+    return ReactiveCache.getCurrentUser().hasCustomFieldsGrid();
   },
 
 
   cardMaximized() {
-    return !Utils.getPopupCardId() && Meteor.user().hasCardMaximized();
-  },
-
-  canModifyCard() {
-    return (
-      Meteor.user() &&
-      Meteor.user().isBoardMember() &&
-      !Meteor.user().isCommentOnly() &&
-      !Meteor.user().isWorker()
-    );
+    return !Utils.getPopupCardId() && ReactiveCache.getCurrentUser().hasCardMaximized();
   },
 
   scrollParentContainer() {
     const cardPanelWidth = 600;
     const parentComponent = this.parentComponent();
-
     /*
         // Incomplete fix about bug where opening card scrolls to wrong place
         // https://github.com/wekan/wekan/issues/4572#issuecomment-1184149395
         // TODO sometimes parentComponent is not available, maybe because it's not
         // yet created?!
-        if (!parentComponent) return;
-        const bodyBoardComponent = parentComponent.parentComponent();
+        //
+	// uncommented again by chrisi51
+        // only with that, the autoscroll feature is working properly
+        // after my fixes, all scrollings where correct
     */
+	if (!parentComponent) return;
+        const bodyBoardComponent = parentComponent.parentComponent();
+
 
     //On Mobile View Parent is Board, Not Board Body. I cant see how this funciton should work then.
     if (bodyBoardComponent === null) return;
@@ -152,7 +148,7 @@ BlazeComponent.extendComponent({
     const card = this.currentData();
     let result = '#';
     if (card) {
-      const board = Boards.findOne(card.boardId);
+      const board = ReactiveCache.getBoard(card.boardId);
       if (board) {
         result = FlowRouter.path('card', {
           boardId: card.boardId,
@@ -201,15 +197,15 @@ BlazeComponent.extendComponent({
         cardId: card._id,
         boardId: card.boardId,
         listId: card.listId,
-        user: Meteor.user().username,
+        user: ReactiveCache.getCurrentUser().username,
         url: '',
       };
 
-      const integrations = Integrations.find({
+      const integrations = ReactiveCache.getIntegrations({
         boardId: { $in: [card.boardId, Integrations.Const.GLOBAL_WEBHOOK_ID] },
         enabled: true,
         activities: { $in: ['CardDetailsRendered', 'all'] },
-      }).fetch();
+      });
 
       if (integrations.length > 0) {
         integrations.forEach((integration) => {
@@ -223,6 +219,12 @@ BlazeComponent.extendComponent({
         });
       }
       //-------------
+    }
+
+    if (!Utils.isMiniScreen()) {
+      Meteor.setTimeout(() => {
+        this.scrollParentContainer();
+      }, 500);
     }
 
     const $checklistsDom = this.$('.card-checklist-items');
@@ -296,7 +298,7 @@ BlazeComponent.extendComponent({
     });
 
     function userIsMember() {
-      return Meteor.user() && Meteor.user().isBoardMember();
+      return ReactiveCache.getCurrentUser()?.isBoardMember();
     }
 
     // Disable sorting if the current user is not a board member
@@ -450,11 +452,11 @@ BlazeComponent.extendComponent({
         'click .js-maximize-card-details'() {
           Meteor.call('toggleCardMaximized');
           autosize($('.card-details'));
-          if (!Utils.isMiniScreen()) {
-            Meteor.setTimeout(() => {
-              this.scrollParentContainer();
-            }, 500);
-          }
+//          if (!Utils.isMiniScreen()) {
+//            Meteor.setTimeout(() => {
+//              this.scrollParentContainer();
+//            }, 500);
+//          }
         },
         'click .js-minimize-card-details'() {
           Meteor.call('toggleCardMaximized');
@@ -660,15 +662,7 @@ Template.cardDetailsActionsPopup.helpers({
   },
 
   isBoardAdmin() {
-    return Meteor.user().isBoardAdmin();
-  },
-
-  canModifyCard() {
-    return (
-      Meteor.user() &&
-      Meteor.user().isBoardMember() &&
-      !Meteor.user().isCommentOnly()
-    );
+    return ReactiveCache.getCurrentUser().isBoardAdmin();
   },
 });
 
@@ -744,19 +738,8 @@ BlazeComponent.extendComponent({
 }).register('editCardTitleForm');
 
 Template.cardMembersPopup.onCreated(function () {
-  let currBoard = Boards.findOne(Session.get('currentBoard'));
+  let currBoard = Utils.getCurrentBoard();
   let members = currBoard.activeMembers();
-
-  // let query = {
-  //   "teams.teamId": { $in: currBoard.teams.map(t => t.teamId) },
-  // };
-
-  // let boardTeamUsers = Users.find(query, {
-  //   sort: { sort: 1 },
-  // });
-
-  // members = currBoard.activeMembers2(members, boardTeamUsers);
-
   this.members = new ReactiveVar(members);
 });
 
@@ -769,29 +752,19 @@ Template.cardMembersPopup.events({
 
 Template.cardMembersPopup.helpers({
   members() {
-    return Template.instance().members.get();
+    return _.sortBy(Template.instance().members.get(),'fullname');
   },
 });
 
 const filterMembers = (filterTerm) => {
-  let currBoard = Boards.findOne(Session.get('currentBoard'));
+  let currBoard = Utils.getCurrentBoard();
   let members = currBoard.activeMembers();
-
-  // let query = {
-  //   "teams.teamId": { $in: currBoard.teams.map(t => t.teamId) },
-  // };
-
-  // let boardTeamUsers = Users.find(query, {
-  //   sort: { sort: 1 },
-  // });
-
-  // members = currBoard.activeMembers2(members, boardTeamUsers);
 
   if (filterTerm) {
     members = members
       .map(member => ({
         member,
-        user: Users.findOne(member.userId)
+        user: ReactiveCache.getUser(member.userId)
       }))
       .filter(({ user }) =>
         (user.profile.fullname !== undefined && user.profile.fullname.toLowerCase().indexOf(filterTerm.toLowerCase()) !== -1)
@@ -830,11 +803,11 @@ Template.editCardAssignerForm.events({
 /** Move Card Dialog */
 (class extends DialogWithBoardSwimlaneList {
   getDialogOptions() {
-    const ret = Meteor.user().getMoveAndCopyDialogOptions();
+    const ret = ReactiveCache.getCurrentUser().getMoveAndCopyDialogOptions();
     return ret;
   }
   setDone(boardId, swimlaneId, listId, options) {
-    Meteor.user().setMoveAndCopyDialogOption(this.currentBoardId, options);
+    ReactiveCache.getCurrentUser().setMoveAndCopyDialogOption(this.currentBoardId, options);
     const card = this.data();
     const minOrder = card.getMinSort(listId, swimlaneId);
     card.move(boardId, swimlaneId, listId, minOrder - 1);
@@ -844,11 +817,11 @@ Template.editCardAssignerForm.events({
 /** Copy Card Dialog */
 (class extends DialogWithBoardSwimlaneList {
   getDialogOptions() {
-    const ret = Meteor.user().getMoveAndCopyDialogOptions();
+    const ret = ReactiveCache.getCurrentUser().getMoveAndCopyDialogOptions();
     return ret;
   }
   setDone(boardId, swimlaneId, listId, options) {
-    Meteor.user().setMoveAndCopyDialogOption(this.currentBoardId, options);
+    ReactiveCache.getCurrentUser().setMoveAndCopyDialogOption(this.currentBoardId, options);
     const card = this.data();
 
     // const textarea = $('#copy-card-title');
@@ -871,11 +844,11 @@ Template.editCardAssignerForm.events({
 /** Convert Checklist-Item to card dialog */
 (class extends DialogWithBoardSwimlaneList {
   getDialogOptions() {
-    const ret = Meteor.user().getMoveAndCopyDialogOptions();
+    const ret = ReactiveCache.getCurrentUser().getMoveAndCopyDialogOptions();
     return ret;
   }
   setDone(boardId, swimlaneId, listId, options) {
-    Meteor.user().setMoveAndCopyDialogOption(this.currentBoardId, options);
+    ReactiveCache.getCurrentUser().setMoveAndCopyDialogOption(this.currentBoardId, options);
     const card = this.data();
 
     const textarea = this.$('#copy-card-title');
@@ -889,7 +862,7 @@ Template.editCardAssignerForm.events({
         swimlaneId: swimlaneId,
         sort: 0,
       });
-      const card = Cards.findOne(_id);
+      const card = ReactiveCache.getCard(_id);
       const minOrder = card.getMinSort();
       card.move(card.boardId, card.swimlaneId, card.listId, minOrder - 1);
 
@@ -901,11 +874,11 @@ Template.editCardAssignerForm.events({
 /** Copy many cards dialog */
 (class extends DialogWithBoardSwimlaneList {
   getDialogOptions() {
-    const ret = Meteor.user().getMoveAndCopyDialogOptions();
+    const ret = ReactiveCache.getCurrentUser().getMoveAndCopyDialogOptions();
     return ret;
   }
   setDone(boardId, swimlaneId, listId, options) {
-    Meteor.user().setMoveAndCopyDialogOption(this.currentBoardId, options);
+    ReactiveCache.getCurrentUser().setMoveAndCopyDialogOption(this.currentBoardId, options);
     const card = this.data();
 
     const textarea = this.$('#copy-card-title');
@@ -977,27 +950,27 @@ BlazeComponent.extendComponent({
   },
 
   boards() {
-    return Boards.find(
+    const ret = ReactiveCache.getBoards(
       {
         archived: false,
         'members.userId': Meteor.userId(),
-        _id: {
-          $ne: Meteor.user().getTemplatesBoardId(),
-        },
+        _id: { $ne: ReactiveCache.getCurrentUser().getTemplatesBoardId() },
       },
       {
         sort: { sort: 1 /* boards default sorting */ },
       },
     );
+    return ret;
   },
 
   cards() {
     const currentId = Utils.getCurrentCardId();
     if (this.parentBoard.get()) {
-      return Cards.find({
+      const ret = ReactiveCache.getCards({
         boardId: this.parentBoard.get(),
         _id: { $ne: currentId },
       });
+      return ret;
     } else {
       return [];
     }
@@ -1021,7 +994,7 @@ BlazeComponent.extendComponent({
 
   setParentCardId(cardId) {
     if (cardId) {
-      this.parentCard = Cards.findOne(cardId);
+      this.parentCard = ReactiveCache.getCard(cardId);
     } else {
       this.parentCard = null;
     }
@@ -1040,7 +1013,7 @@ BlazeComponent.extendComponent({
         'click .js-delete': Popup.afterConfirm('cardDelete', function () {
           Popup.close();
           // verify that there are no linked cards
-          if (Cards.find({ linkedId: this._id }).count() === 0) {
+          if (ReactiveCache.getCards({ linkedId: this._id }).length === 0) {
             Cards.remove(this._id);
           } else {
             // TODO: Maybe later we can list where the linked cards are.
@@ -1579,8 +1552,8 @@ EscapeActions.register(
   () => {
     // if card description diverges from database due to editing
     // ask user whether changes should be applied
-    if (Meteor.user()) {
-      if (Meteor.user().profile.rescueCardDescription == true) {
+    if (ReactiveCache.getCurrentUser()) {
+      if (ReactiveCache.getCurrentUser().profile.rescueCardDescription == true) {
         currentDescription = document.getElementsByClassName("editor js-new-description-input").item(0)
         if (currentDescription?.value && !(currentDescription.value === Utils.getCurrentCard().getDescription())) {
           if (confirm(TAPi18n.__('rescue-card-description-dialogue'))) {
@@ -1614,19 +1587,8 @@ EscapeActions.register(
 );
 
 Template.cardAssigneesPopup.onCreated(function () {
-  let currBoard = Boards.findOne(Session.get('currentBoard'));
+  let currBoard = Utils.getCurrentBoard();
   let members = currBoard.activeMembers();
-
-  // let query = {
-  //   "teams.teamId": { $in: currBoard.teams.map(t => t.teamId) },
-  // };
-
-  // let boardTeamUsers = Users.find(query, {
-  //   sort: { sort: 1 },
-  // });
-
-  // members = currBoard.activeMembers2(members, boardTeamUsers);
-
   this.members = new ReactiveVar(members);
 });
 
@@ -1652,17 +1614,17 @@ Template.cardAssigneesPopup.helpers({
   },
 
   members() {
-    return Template.instance().members.get();
+    return _.sortBy(Template.instance().members.get(),'fullname');
   },
 
   user() {
-    return Users.findOne(this.userId);
+    return ReactiveCache.getUser(this.userId);
   },
 });
 
 Template.cardAssigneePopup.helpers({
   userData() {
-    return Users.findOne(this.userId, {
+    return ReactiveCache.getUser(this.userId, {
       fields: {
         profile: 1,
         username: 1,
@@ -1671,21 +1633,10 @@ Template.cardAssigneePopup.helpers({
   },
 
   memberType() {
-    const user = Users.findOne(this.userId);
+    const user = ReactiveCache.getUser(this.userId);
     return user && user.isBoardAdmin() ? 'admin' : 'normal';
   },
 
-  /*
-    presenceStatusClassName() {
-      const user = Users.findOne(this.userId);
-      const userPresence = presences.findOne({ userId: this.userId });
-      if (user && user.isInvitedTo(Session.get('currentBoard'))) return 'pending';
-      else if (!userPresence) return 'disconnected';
-      else if (Session.equals('currentBoard', userPresence.state.currentBoardId))
-        return 'active';
-      else return 'idle';
-    },
-  */
   isCardAssignee() {
     const card = Template.parentData();
     const cardAssignees = card.getAssignees();
@@ -1694,13 +1645,13 @@ Template.cardAssigneePopup.helpers({
   },
 
   user() {
-    return Users.findOne(this.userId);
+    return ReactiveCache.getUser(this.userId);
   },
 });
 
 Template.cardAssigneePopup.events({
   'click .js-remove-assignee'() {
-    Cards.findOne(this.cardId).unassignAssignee(this.userId);
+    ReactiveCache.getCard(this.cardId).unassignAssignee(this.userId);
     Popup.back();
   },
   'click .js-edit-profile': Popup.open('editProfile'),

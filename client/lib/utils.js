@@ -1,4 +1,15 @@
+import { ReactiveCache } from '/imports/reactiveCache';
+
 Utils = {
+  setBackgroundImage(url) {
+    const currentBoard = Utils.getCurrentBoard();
+    if (currentBoard.backgroundImageURL !== undefined) {
+      $(".board-wrapper,.board-wrapper .board-canvas").css({"background":"url(" + currentBoard.backgroundImageURL + ")","background-size":"cover"});
+      $(".swimlane,.swimlane .list,.swimlane .list .list-body,.swimlane .list:first-child .list-body").css({"background-color":"transparent"});
+    } else if (currentBoard.color !== undefined) {
+      currentBoard.setColor(currentBoard.color);
+    }
+  },
   /** returns the current board id
    * <li> returns the current board id or the board id of the popup card if set
    */
@@ -22,22 +33,53 @@ Utils = {
     const ret = Session.get('popupCardId');
     return ret;
   },
+  getCurrentListId() {
+    const ret = Session.get('currentList');
+    return ret;
+  },
   /** returns the current board
    * <li> returns the current board or the board of the popup card if set
    */
   getCurrentBoard() {
     const boardId = Utils.getCurrentBoardId();
-    const ret = Boards.findOne(boardId);
+    const ret = ReactiveCache.getBoard(boardId);
     return ret;
   },
   getCurrentCard(ignorePopupCard) {
     const cardId = Utils.getCurrentCardId(ignorePopupCard);
-    const ret = Cards.findOne(cardId);
+    const ret = ReactiveCache.getCard(cardId);
+    return ret;
+  },
+  getCurrentList() {
+    const listId = this.getCurrentListId();
+    let ret = null;
+    if (listId) {
+      ret = ReactiveCache.getList(listId);
+    }
     return ret;
   },
   getPopupCard() {
     const cardId = Utils.getPopupCardId();
-    const ret = Cards.findOne(cardId);
+    const ret = ReactiveCache.getCard(cardId);
+    return ret;
+  },
+  canModifyCard() {
+    const currentUser = ReactiveCache.getCurrentUser();
+    const ret = (
+      currentUser &&
+      currentUser.isBoardMember() &&
+      !currentUser.isCommentOnly() &&
+      !currentUser.isWorker()
+    );
+    return ret;
+  },
+  canModifyBoard() {
+    const currentUser = ReactiveCache.getCurrentUser();
+    const ret = (
+      currentUser &&
+      currentUser.isBoardMember() &&
+      !currentUser.isCommentOnly()
+    );
     return ret;
   },
   reload() {
@@ -48,9 +90,9 @@ Utils = {
     window.location.reload();
   },
   setBoardView(view) {
-    currentUser = Meteor.user();
+    currentUser = ReactiveCache.getCurrentUser();
     if (currentUser) {
-      Meteor.user().setBoardView(view);
+      ReactiveCache.getCurrentUser().setBoardView(view);
     } else if (view === 'board-view-swimlanes') {
       window.localStorage.setItem('boardView', 'board-view-swimlanes'); //true
       Utils.reload();
@@ -72,7 +114,7 @@ Utils = {
   },
 
   boardView() {
-    currentUser = Meteor.user();
+    currentUser = ReactiveCache.getCurrentUser();
     if (currentUser) {
       return (currentUser.profile || {}).boardView;
     } else if (
@@ -116,11 +158,8 @@ Utils = {
   },
 
   archivedBoardIds() {
-    const archivedBoards = [];
-    Boards.find({ archived: false }).forEach(board => {
-      archivedBoards.push(board._id);
-    });
-    return archivedBoards;
+    const ret = ReactiveCache.getBoards({ archived: false }).map(board => board._id);
+    return ret;
   },
 
   dueCardsView() {
@@ -155,7 +194,7 @@ Utils = {
 
   // XXX We should remove these two methods
   goBoardId(_id) {
-    const board = Boards.findOne(_id);
+    const board = ReactiveCache.getBoard(_id);
     return (
       board &&
       FlowRouter.go('board', {
@@ -166,8 +205,8 @@ Utils = {
   },
 
   goCardId(_id) {
-    const card = Cards.findOne(_id);
-    const board = Boards.findOne(card.boardId);
+    const card = ReactiveCache.getCard(_id);
+    const board = ReactiveCache.getBoard(card.boardId);
     return (
       board &&
       FlowRouter.go('card', {
@@ -180,7 +219,7 @@ Utils = {
   getCommonAttachmentMetaFrom(card) {
     const meta = {};
     if (card.isLinkedCard()) {
-      meta.boardId = Cards.findOne(card.linkedId).boardId;
+      meta.boardId = ReactiveCache.getCard(card.linkedId).boardId;
       meta.cardId = card.linkedId;
     } else {
       meta.boardId = card.boardId;
@@ -255,7 +294,7 @@ Utils = {
   isMiniScreen() {
     // OLD WINDOW WIDTH DETECTION:
     this.windowResizeDep.depend();
-    return $(window).width() <= 250;
+    return $(window).width() <= 800;
   },
 
   isTouchScreen() {
@@ -288,10 +327,11 @@ Utils = {
 
   // returns if desktop drag handles are enabled
   isShowDesktopDragHandles() {
-    const currentUser = Meteor.user();
-    if (currentUser) {
-      return (currentUser.profile || {}).showDesktopDragHandles;
-    } else if (window.localStorage.getItem('showDesktopDragHandles')) {
+    //const currentUser = ReactiveCache.getCurrentUser();
+    //if (currentUser) {
+    //  return (currentUser.profile || {}).showDesktopDragHandles;
+    //} else if (window.localStorage.getItem('showDesktopDragHandles')) {
+    if (window.localStorage.getItem('showDesktopDragHandles')) {
       return true;
     } else {
       return false;
@@ -300,7 +340,8 @@ Utils = {
 
   // returns if mini screen or desktop drag handles
   isTouchScreenOrShowDesktopDragHandles() {
-    return this.isTouchScreen() || this.isShowDesktopDragHandles();
+    //return this.isTouchScreen() || this.isShowDesktopDragHandles();
+    return this.isShowDesktopDragHandles();
   },
 
   calculateIndexData(prevData, nextData, nItems = 1) {
@@ -311,20 +352,51 @@ Utils = {
       increment = 1;
       // If we drop the card in the first position
     } else if (!prevData) {
-      base = nextData.sort - 1;
-      increment = -1;
+      const nextSortIndex = nextData.sort;
+      const ceil = Math.ceil(nextSortIndex - 1);
+      if (ceil < nextSortIndex) {
+        increment = nextSortIndex - ceil;
+        base = nextSortIndex - increment;
+      } else {
+        base = nextData.sort - 1;
+        increment = -1;
+      }
       // If we drop the card in the last position
     } else if (!nextData) {
-      base = prevData.sort + 1;
-      increment = 1;
+      const prevSortIndex = prevData.sort;
+      const floor = Math.floor(prevSortIndex + 1);
+      if (floor > prevSortIndex) {
+        increment = prevSortIndex - floor;
+        base = prevSortIndex - increment;
+      } else {
+        base = prevData.sort + 1;
+        increment = 1;
+      }
     }
     // In the general case take the average of the previous and next element
     // sort indexes.
     else {
       const prevSortIndex = prevData.sort;
       const nextSortIndex = nextData.sort;
-      increment = (nextSortIndex - prevSortIndex) / (nItems + 1);
-      base = prevSortIndex + increment;
+      if (nItems == 1 ) {
+        if (prevSortIndex < 0 ) {
+          const ceil = Math.ceil(nextSortIndex - 1);
+          if (ceil < nextSortIndex && ceil > prevSortIndex) {
+            increment = ceil - prevSortIndex;
+          }
+        } else {
+          const floor = Math.floor(nextSortIndex - 1);
+          if (floor < nextSortIndex && floor > prevSortIndex) {
+            increment = floor - prevSortIndex;
+          }
+        }
+      }
+      if (!increment) {
+        increment = (nextSortIndex - prevSortIndex) / (nItems + 1);
+      }
+      if (!base) {
+        base = prevSortIndex + increment;
+      }
     }
     // XXX Return a generator that yield values instead of a base with a
     // increment number.
@@ -336,34 +408,16 @@ Utils = {
 
   // Determine the new sort index
   calculateIndex(prevCardDomElement, nextCardDomElement, nCards = 1) {
-    let base, increment;
-    // If we drop the card to an empty column
-    if (!prevCardDomElement && !nextCardDomElement) {
-      base = 0;
-      increment = 1;
-      // If we drop the card in the first position
-    } else if (!prevCardDomElement) {
-      base = Blaze.getData(nextCardDomElement).sort - 1;
-      increment = -1;
-      // If we drop the card in the last position
-    } else if (!nextCardDomElement) {
-      base = Blaze.getData(prevCardDomElement).sort + 1;
-      increment = 1;
+    let prevData = null;
+    let nextData = null;
+    if (prevCardDomElement) {
+      prevData = Blaze.getData(prevCardDomElement)
     }
-    // In the general case take the average of the previous and next element
-    // sort indexes.
-    else {
-      const prevSortIndex = Blaze.getData(prevCardDomElement).sort;
-      const nextSortIndex = Blaze.getData(nextCardDomElement).sort;
-      increment = (nextSortIndex - prevSortIndex) / (nCards + 1);
-      base = prevSortIndex + increment;
+    if (nextCardDomElement) {
+      nextData = Blaze.getData(nextCardDomElement);
     }
-    // XXX Return a generator that yield values instead of a base with a
-    // increment number.
-    return {
-      base,
-      increment,
-    };
+    const ret = Utils.calculateIndexData(prevData, nextData, nCards);
+    return ret;
   },
 
   manageCustomUI() {
@@ -378,7 +432,7 @@ Utils = {
   },
 
   setCustomUI(data) {
-    const currentBoard = Boards.findOne(Session.get('currentBoard'));
+    const currentBoard = Utils.getCurrentBoard();
     if (currentBoard) {
       DocHead.setTitle(`${currentBoard.title} - ${data.productName}`);
     } else {
@@ -390,7 +444,7 @@ Utils = {
     window._paq = window._paq || [];
     window._paq.push(['setDoNotTrack', data.doNotTrack]);
     if (data.withUserName) {
-      window._paq.push(['setUserId', Meteor.user().username]);
+      window._paq.push(['setUserId', ReactiveCache.getCurrentUser().username]);
     }
     window._paq.push(['trackPageView']);
     window._paq.push(['enableLinkTracking']);

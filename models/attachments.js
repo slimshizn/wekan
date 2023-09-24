@@ -1,11 +1,12 @@
+import { ReactiveCache } from '/imports/reactiveCache';
 import { Meteor } from 'meteor/meteor';
 import { FilesCollection } from 'meteor/ostrio:files';
 import { isFileValid } from './fileValidation';
 import { createBucket } from './lib/grid/createBucket';
 import fs from 'fs';
 import path from 'path';
-import { AttachmentStoreStrategyFilesystem, AttachmentStoreStrategyGridFs} from '/models/lib/attachmentStoreStrategy';
-import FileStoreStrategyFactory, {moveToStorage, rename, STORAGE_NAME_FILESYSTEM, STORAGE_NAME_GRIDFS} from '/models/lib/fileStoreStrategy';
+import { AttachmentStoreStrategyFilesystem, AttachmentStoreStrategyGridFs, AttachmentStoreStrategyS3 } from '/models/lib/attachmentStoreStrategy';
+import FileStoreStrategyFactory, {moveToStorage, rename, STORAGE_NAME_FILESYSTEM, STORAGE_NAME_GRIDFS, STORAGE_NAME_S3} from '/models/lib/fileStoreStrategy';
 
 let attachmentUploadExternalProgram;
 let attachmentUploadMimeTypes = [];
@@ -72,7 +73,12 @@ Attachments = new FilesCollection({
       filenameWithoutExtension = Math.random().toString(36).slice(2);
       fileId = Math.random().toString(36).slice(2);
     }
-    const ret = fileId + "-original-" + filenameWithoutExtension;
+
+    // OLD:
+    //const ret = fileId + "-original-" + filenameWithoutExtension;
+    // NEW: Save file only with filename of ObjectID, not including filename.
+    // Fixes https://github.com/wekan/wekan/issues/4416#issuecomment-1510517168
+    const ret = fileId;
     // remove fileId from meta, it was only stored there to have this information here in the namingFunction function
     return ret;
   },
@@ -90,7 +96,9 @@ Attachments = new FilesCollection({
       fileObj.versions[versionName].storage = STORAGE_NAME_FILESYSTEM;
     });
 
+    this._now = new Date();
     Attachments.update({ _id: fileObj._id }, { $set: { "versions" : fileObj.versions } });
+    Attachments.update({ _id: fileObj.uploadedAtOstrio }, { $set: { "uploadedAtOstrio" : this._now } });
 
     let storageDestination = fileObj.meta.copyStorage || STORAGE_NAME_GRIDFS;
     Meteor.defer(() => Meteor.call('validateAttachmentAndMoveToStorage', fileObj._id, storageDestination));
@@ -115,7 +123,7 @@ Attachments = new FilesCollection({
       return false;
     }
 
-    const board = Boards.findOne(fileObj.meta.boardId);
+    const board = ReactiveCache.getBoard(fileObj.meta.boardId);
     if (board.isPublic()) {
       return true;
     }
@@ -127,13 +135,13 @@ Attachments = new FilesCollection({
 if (Meteor.isServer) {
   Attachments.allow({
     insert(userId, fileObj) {
-      return allowIsBoardMember(userId, Boards.findOne(fileObj.boardId));
+      return allowIsBoardMember(userId, ReactiveCache.getBoard(fileObj.boardId));
     },
     update(userId, fileObj) {
-      return allowIsBoardMember(userId, Boards.findOne(fileObj.boardId));
+      return allowIsBoardMember(userId, ReactiveCache.getBoard(fileObj.boardId));
     },
     remove(userId, fileObj) {
-      return allowIsBoardMember(userId, Boards.findOne(fileObj.boardId));
+      return allowIsBoardMember(userId, ReactiveCache.getBoard(fileObj.boardId));
     },
     fetch: ['meta'],
   });
@@ -143,20 +151,20 @@ if (Meteor.isServer) {
       check(fileObjId, String);
       check(storageDestination, String);
 
-      const fileObj = Attachments.findOne({_id: fileObjId});
+      const fileObj = ReactiveCache.getAttachment(fileObjId);
       moveToStorage(fileObj, storageDestination, fileStoreStrategyFactory);
     },
     renameAttachment(fileObjId, newName) {
       check(fileObjId, String);
       check(newName, String);
 
-      const fileObj = Attachments.findOne({_id: fileObjId});
+      const fileObj = ReactiveCache.getAttachment(fileObjId);
       rename(fileObj, newName, fileStoreStrategyFactory);
     },
     validateAttachment(fileObjId) {
       check(fileObjId, String);
 
-      const fileObj = Attachments.findOne({_id: fileObjId});
+      const fileObj = ReactiveCache.getAttachment(fileObjId);
       const isValid = Promise.await(isFileValid(fileObj, attachmentUploadMimeTypes, attachmentUploadSize, attachmentUploadExternalProgram));
 
       if (!isValid) {
@@ -169,7 +177,7 @@ if (Meteor.isServer) {
 
       Meteor.call('validateAttachment', fileObjId);
 
-      const fileObj = Attachments.findOne({_id: fileObjId});
+      const fileObj = ReactiveCache.getAttachment(fileObjId);
 
       if (fileObj) {
         Meteor.defer(() => Meteor.call('moveAttachmentToStorage', fileObjId, storageDestination));

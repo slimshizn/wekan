@@ -46,7 +46,7 @@
   background: #dedede;
   display: flex;
   flex-direction: row;
-  max-height: calc(100% - 26px);
+  overflow: 0;
 }
 .swimlane.placeholder {
   background-color: rgba(0,0,0,0.2);
@@ -85,6 +85,11 @@
   padding: 5px 5px;
   font-size: 22px;
 }
+@media print {
+  .swimlane .swimlane-header-wrap .swimlane-header-menu {
+    display: none;
+  }
+}
 .swimlane .swimlane-header-wrap .swimlane-header-plus-icon {
   margin-left: 5px;
   padding-right: 20px;
@@ -109,6 +114,9 @@
   transform: translateY(-50%);
   left: 87vw;
   font-size: 24px;
+}
+#js-swimlane-height-edit .swimlane-height-error {
+  display: none;
 }
 .list-group {
   height: 100%;

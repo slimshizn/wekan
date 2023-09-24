@@ -1,5 +1,31 @@
 @ECHO OFF
 
+REM # ------------------- HOWTO ---------------------
+REM # https://github.com/wekan/wekan/wiki/Offline
+
+REM #-------------------- REQUIRED SETTINGS START --------------------
+
+REM # Writable path required to exist and be writable for attachments to migrate and work correctly
+SET WRITABLE_PATH=..
+
+REM # MongoDB database URL required
+SET MONGO_URL=mongodb://127.0.0.1:27017/wekan
+
+REM # If port is 80, must change ROOT_URL to: http://YOUR-WEKAN-SERVER-IPv4-ADDRESS , like http://192.168.0.100
+REM # If port is not 80, must change ROOT_URL to: http://YOUR-WEKAN-SERVER-IPv4-ADDRESS:YOUR-PORT-NUMBER , like http://192.168.0.100:2000
+REM # If ROOT_URL is not correct, these do not work: translations, uploading attachments.
+SET ROOT_URL=http://192.168.0.21
+
+REM # Must change to YOUR-PORT-NUMBER:
+SET PORT=80
+
+REM #------------------- REQUIRED SETTINGS END ----------------------
+
+REM #-------------------- OPTIONAL SETTINGS START -------------------
+REM # If at public Internet, required different settings:
+REM # - For ROOT_URL: https://github.com/wekan/wekan/wiki/Settings
+REM # - For SSL/TLS, also at above wiki right menu: config for Caddy/Nginx/Apache
+
 REM ------------------------------------------------------------
 
 REM # Debug OIDC OAuth2 etc.
@@ -7,13 +33,13 @@ REM SET DEBUG=true
 
 REM ------------------------------------------------------------
 
-SET ROOT_URL=http://localhost
-SET PORT=80
-SET MONGO_URL=mongodb://127.0.0.1:27017/wekan
-
-REM Writable path for temporary saving attachments during migration to Meteor-Files
-REM Create directory wekan-uploads
-SET WRITABLE_PATH=..
+REM # ==== AWS S3 FOR FILES ====
+REM # Any region. For example:
+REM #   us-standard,us-west-1,us-west-2,
+REM #   eu-west-1,eu-central-1,
+REM #   ap-southeast-1,ap-northeast-1,sa-east-1
+REM #
+REM SET S3='{"s3":{"key": "xxx", "secret": "xxx", "bucket": "xxx", "region": "eu-west-1"}}'
 
 REM # https://github.com/wekan/wekan/wiki/Troubleshooting-Mail
 REM SET MAIL_URL=smtps://username:password@email-smtp.eu-west-1.amazonaws.com:587/
@@ -28,6 +54,10 @@ REM SET RESULTS_PER_PAGE=20
 
 REM # If you disable Wekan API with false, Export Board does not work.
 SET WITH_API=true
+
+REM # ==== AFTER OIDC LOGIN, ADD USERS AUTOMATICALLY TO THIS BOARD ID ====
+REM # https://github.com/wekan/wekan/pull/5098
+REM SET DEFAULT_BOARD_ID=abcd1234
 
 REM # ==== RICH TEXT EDITOR IN CARD COMMENTS ====
 REM # https://github.com/wekan/wekan/pull/2560
@@ -482,7 +512,11 @@ REM SET WAIT_SPINNER=Bounce
 
 REM # https://github.com/wekan/wekan/issues/3585#issuecomment-1021522132
 REM # Add more Node heap:
-SET NODE_OPTIONS="--max_old_space_size=4096"
+REM # SET NODE_OPTIONS="--max_old_space_size=4096"
 REM # Add more stack. ulimit is not at Windows, stack-size is at Windows:
 REM #   bash -c "ulimit -s 65500; exec node --stack-size=65500 main.js"
-node --stack-size=65500 main.js
+REM #node --stack-size=65500 main.js
+
+REM #-------------------- OPTIONAL SETTINGS END --------------------
+
+node main.js

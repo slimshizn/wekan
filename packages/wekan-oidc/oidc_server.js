@@ -81,7 +81,6 @@ OAuth.registerService('oidc', 2, null, function (query) {
 
   //temporarily store data from oidc in user.services.oidc.groups to update groups
   serviceData.groups = (userinfo["groups"] && userinfo["wekanGroups"]) ? userinfo["wekanGroups"] : userinfo["groups"];
-
   // groups arriving as array of strings indicate there is no scope set in oidc privider
   // to assign teams and keep admin privileges
   // data needs to be treated  differently.
@@ -105,6 +104,12 @@ OAuth.registerService('oidc', 2, null, function (query) {
       }
     });
   }
+
+  // Fix OIDC login loop for integer user ID. Thanks to danielkaiser.
+  // https://github.com/wekan/wekan/issues/4795
+  Meteor.call('groupRoutineOnLogin',serviceData, ""+serviceData.id);
+  Meteor.call('boardRoutineOnLogin',serviceData, ""+serviceData.id);
+
   return {
     serviceData: serviceData,
     options: { profile: profile }
@@ -283,18 +288,41 @@ Meteor.methods({
     check(info, Object);
     check(userId, String);
     var propagateOidcData = process.env.PROPAGATE_OIDC_DATA || false;
-    if (propagateOidcData)
-    {
-
+    if (propagateOidcData) {
       users= Meteor.users;
-      user = users.findOne({'_id':  userId});
-      if(user)
-      {
-        //updates/creates Groups and user admin privileges accordingly
-        addGroupsWithAttributes(user, info.groups);
+      user = users.findOne({'services.oidc.id':  userId});
+
+      if(user) {
+        //updates/creates Groups and user admin privileges accordingly if not undefined
+        if (info.groups) {
+          addGroupsWithAttributes(user, info.groups);
+        }
+
         if(info.email) addEmail(user, info.email);
         if(info.fullname) changeFullname(user, info.fullname);
         if(info.username) changeUsername(user, info.username);
+      }
+    }
+  }
+});
+
+Meteor.methods({
+  'boardRoutineOnLogin': function(info, oidcUserId)
+  {
+    check(info, Object);
+    check(oidcUserId, String);
+
+    const defaultBoardId = process.env.DEFAULT_BOARD_ID || false;
+
+    if (defaultBoardId)
+    {
+      const board = Boards.findOne(defaultBoardId)
+      const user = Users.findOne({ 'services.oidc.id': oidcUserId })
+      const memberIndex = _.pluck(board.members, 'userId').indexOf(user._id);
+
+      if(board && memberIndex < 0)
+      {
+        board.addMember(user._id)
       }
     }
   }

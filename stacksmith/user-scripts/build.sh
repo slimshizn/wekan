@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 BUILD_DEPS="bsdtar gnupg wget curl bzip2 python git ca-certificates perl-Digest-SHA"
-NODE_VERSION=v14.20.1
+NODE_VERSION=v14.21.3
 #METEOR_RELEASE=1.6.0.1 - for Stacksmith, meteor-1.8 branch that could have METEOR@1.8.1-beta.8 or newer
 USE_EDGE=false
 METEOR_EDGE=1.5-beta.17
@@ -29,10 +29,12 @@ sudo cp $(which tar) $(which tar)~
 sudo ln -sf $(which bsdtar) $(which tar)
 
 # Install nodejs
-wget https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz
-wget https://nodejs.org/dist/${NODE_VERSION}/SHASUMS256.txt.asc
+wget https://github.com/wekan/node-v14-esm/releases/download/${NODE_VERSION}/node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz
+wget https://github.com/wekan/node-v14-esm/releases/download/${NODE_VERSION}/SHASUMS256.txt
+#wget https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz
+#wget https://nodejs.org/dist/${NODE_VERSION}/SHASUMS256.txt.asc
 
-grep ${NODE_VERSION}-${ARCHITECTURE}.tar.gz SHASUMS256.txt.asc | shasum -a 256 -c -
+grep ${NODE_VERSION}-${ARCHITECTURE}.tar.gz SHASUMS256.txt | shasum -a 256 -c -
 
 tar xvzf node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz
 rm node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz

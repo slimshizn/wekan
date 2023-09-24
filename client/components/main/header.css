@@ -107,6 +107,12 @@
 #header-quick-access a {
   text-decoration: none;
 }
+#header-quick-access i.fa {
+  color: #fff;
+}
+#header-quick-access i.fa:hover {
+  color: #ccc;
+}
 #header-quick-access #header-user-bar,
 #header-quick-access #header-new-board-icon,
 #header-quick-access ul li {
@@ -244,6 +250,19 @@
     right: 0px;
     padding: 10px;
     margin: -8px 0 -10px -10px;
+  }
+}
+@media print {
+  #header-quick-access .allBoards,
+  #header-quick-access ul,
+  #header-quick-access .js-toggle-desktop-drag-handles,
+  #header-quick-access #notifications,
+  #header-quick-access #header-new-board-icon,
+  #header #header-main-bar .board-header-btns {
+    display: none;
+  }
+  #header #header-user-bar {
+    float: right;
   }
 }
 .announcement .viewer {

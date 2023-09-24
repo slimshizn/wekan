@@ -1,3 +1,4 @@
+import { ReactiveCache } from '/imports/reactiveCache';
 import Attachments, { fileStoreStrategyFactory } from '/models/attachments';
 const filesize = require('filesize');
 
@@ -44,7 +45,7 @@ BlazeComponent.extendComponent({
 
 BlazeComponent.extendComponent({
   getBoardsWithAttachments() {
-    this.attachments = Attachments.find().get();
+    this.attachments = ReactiveCache.getAttachments();
     this.attachmentsByBoardId = _.chain(this.attachments)
       .groupBy(fileObj => fileObj.meta.boardId)
       .value();
@@ -61,14 +62,14 @@ BlazeComponent.extendComponent({
               return _version;
             });
         });
-        const board = Boards.findOne(boardId);
+        const board = ReactiveCache.getBoard(boardId);
         board.attachments = boardAttachments;
         return board;
       })
     return ret;
   },
   getBoardData(boardid) {
-    const ret = Boards.findOne(boardId);
+    const ret = ReactiveCache.getBoard(boardId);
     return ret;
   },
   events() {
@@ -82,6 +83,11 @@ BlazeComponent.extendComponent({
         'click button.js-move-all-attachments-to-gridfs'(event) {
           this.attachments.forEach(_attachment => {
             Meteor.call('moveAttachmentToStorage', _attachment._id, "gridfs");
+          });
+        },
+        'click button.js-move-all-attachments-to-s3'(event) {
+          this.attachments.forEach(_attachment => {
+            Meteor.call('moveAttachmentToStorage', _attachment._id, "s3");
           });
         },
       }
@@ -103,6 +109,11 @@ BlazeComponent.extendComponent({
             Meteor.call('moveAttachmentToStorage', _attachment._id, "gridfs");
           });
         },
+        'click button.js-move-all-attachments-of-board-to-s3'(event) {
+          this.data().attachments.forEach(_attachment => {
+            Meteor.call('moveAttachmentToStorage', _attachment._id, "s3");
+          });
+        },
       }
     ]
   },
@@ -121,6 +132,9 @@ BlazeComponent.extendComponent({
         },
         'click button.js-move-storage-gridfs'(event) {
           Meteor.call('moveAttachmentToStorage', this.data()._id, "gridfs");
+        },
+        'click button.js-move-storage-s3'(event) {
+          Meteor.call('moveAttachmentToStorage', this.data()._id, "s3");
         },
       }
     ]

@@ -7,8 +7,8 @@
   border-left: 1px solid #ccc;
   padding: 0;
   float: left;
-  min-width: 270px;
-  max-width: 270px;
+  min-width: 100px; /* TODO(mark-i-m): hardcoded? */
+  /*max-width: 270px;*/
   /* Reverted incomplete change list width: */
   /* https://github.com/wekan/wekan/issues/4558 */
   /* Orinal width: 270px. Changes not saved yet: */
@@ -16,6 +16,7 @@
   /* overflow: auto; - List width and height resizeable */
 }
 .list:first-child {
+  min-width: 20px;
   margin-left: 5px;
   border-left: none;
 }
@@ -88,6 +89,12 @@
 .list-header .list-header-menu {
   float: right;
 }
+@media print {
+  .list-header .list-header-menu,
+  .list-header .list-header-menu-icon {
+    display: none;
+  }
+}
 .list-header .list-header-plus-top {
   color: #a6a6a6;
   margin-right: 15px;
@@ -106,6 +113,9 @@
   color: #4d4d4d;
   padding-left: 4px;
 }
+.js-open-list-menu {
+  font-size: 18px;
+}
 .list-body {
   flex: 1 1 auto;
   flex-direction: column;
@@ -116,9 +126,14 @@
 .list-body .minicards {
   flex-grow: 1;
   flex-shrink: 0;
+  /** get card drag/drop working for empty swimlanes */
+  min-height: 32px;
 }
 .list-body .minicards form {
   margin-bottom: 9px;
+}
+.list-body .minicards .add-controls button {
+  min-height: 50px;
 }
 .list-body .open-minicard-composer {
   border-radius: 2px;
@@ -128,6 +143,11 @@
   position: relative;
   text-decoration: none;
   animation: fadeIn 0.3s;
+}
+@media print {
+  .list-body .open-minicard-composer {
+    display: none;
+  }
 }
 .list-body .open-minicard-composer i.fa {
   margin-right: 7px;
@@ -159,7 +179,10 @@
 #js-wip-limit-edit div {
   float: left;
 }
-@media screen and (max-width: 250px) {
+#js-list-width-edit .list-width-error {
+  display: none;
+}
+@media screen and (max-width: 800px) {
   .mini-list {
     flex: 0 0 60px;
     height: auto;

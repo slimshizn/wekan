@@ -22,10 +22,10 @@ const pkgdef :Spk.PackageDefinition = (
     appTitle = (defaultText = "Wekan"),
     # The name of the app as it is displayed to the user.
 
-    appVersion = 652,
+    appVersion = 709,
     # Increment this for every release.
 
-    appMarketingVersion = (defaultText = "6.52.0~2022-10-02"),
+    appMarketingVersion = (defaultText = "7.09.0~2023-08-21"),
     # Human-readable presentation of the app version.
 
     minUpgradableAppVersion = 0,
@@ -228,7 +228,8 @@ const pkgdef :Spk.PackageDefinition = (
 const myCommand :Spk.Manifest.Command = (
   # Here we define the command used to start up your server.
   #argv = ["/sandstorm-http-bridge", "4000", "--", "node", "start.js"],
-  argv = ["/sandstorm-http-bridge", "4000", "--", "node", "--stack-size=65500", "start.js"],
+  #argv = ["/sandstorm-http-bridge", "4000", "--", "node", "--stack-size=65500", "start.js"],
+  argv = ["/sandstorm-http-bridge", "4000", "--", "node", "start.js"],
   environ = [
     # Note that this defines the *entire* environment seen by your app.
     #---------------------------------------------------------------------

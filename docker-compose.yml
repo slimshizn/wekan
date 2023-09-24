@@ -90,15 +90,8 @@ services:
 
   wekandb:
     #-------------------------------------------------------------------------------------
-    # ==== MONGODB AND METEOR VERSION ====
-    # a) mongodb latest, like 3.2 - 4.4 or newer https://hub.docker.com/_/mongo?tab=description
-    # 2020-12-03:
-    # - Mongo image copied from Docker Hub mongo:4.4.2-bionic to Quay
-    #   to avoid Docker Hub rate limits.
-    # Quay image does work:
-    #   image: quay.io/wekan/mongo:4.4.2-bionic
-    # Docker Hub MongoDB image does work:
-    image: mongo:5
+    # ==== MONGODB FROM DOCKER HUB ====
+    image: mongo:6
     #-------------------------------------------------------------------------------------
     container_name: wekan-db
     restart: always
@@ -112,19 +105,26 @@ services:
       - 27017
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
       - wekan-db:/data/db
       - wekan-db-dump:/dump
+      #- /etc/timezone:/etc/timezone:ro # Do not use https://github.com/wekan/wekan/issues/5123
 
   wekan:
     #-------------------------------------------------------------------------------------
-    # ==== MONGODB AND METEOR VERSION ====
-    # a) Quay automatic builds do work work, https://quay.io/wekan/wekan
-    image: quay.io/wekan/wekan
-    # b) Using specific version tag:
-    # image: quay.io/wekan/wekan:v4.52
-    # c) Docker Hub builds do work https://hub.docker.com/r/wekanteam/wekan
-    # image: wekanteam/wekan
+    # ==== WEKAN FROM GITHUB/QUAY/DOCKER HUB ====
+    # All of GitHub, Quay and Docker Hub have latest, but because
+    # latest tag changes when is newest release,
+    # when upgrading would be better to use version tag.
+    # a) Using specific version tag is better:
+    # image: ghcr.io/wekan/wekan:v6.89
+    # image: quay.io/wekan/wekan:v6.89
+    # image: wekanteam/wekan:v6.89
+    # b) GitHub Container registry.
+    image: ghcr.io/wekan/wekan:latest
+    # c) Quay:
+    #image: quay.io/wekan/wekan:latest
+    # d) Docker Hub:
+    #image: wekanteam/wekan:latest
     #-------------------------------------------------------------------------------------
     container_name: wekan-app
     # On CentOS 7 there is seccomp issue with glibc 6,
@@ -154,6 +154,14 @@ services:
       #-----------------------------------------------------------------
       # ==== WRITEABLE PATH FOR FILE UPLOADS ====
       - WRITABLE_PATH=/data
+      #-----------------------------------------------------------------
+      # ==== AWS S3 FOR FILES ====
+      # Any region. For example:
+      #   us-standard,us-west-1,us-west-2,
+      #   eu-west-1,eu-central-1,
+      #   ap-southeast-1,ap-northeast-1,sa-east-1
+      #
+      #- S3='{"s3":{"key": "xxx", "secret": "xxx", "bucket": "xxx", "region": "xxx"}}'
       #-----------------------------------------------------------------
       # ==== MONGO_URL ====
       - MONGO_URL=mongodb://wekandb:27017/wekan
@@ -237,6 +245,10 @@ services:
       # ==== NUMBER OF SEARCH RESULTS PER PAGE BY DEFAULT ====
       #- RESULTS_PER_PAGE=20
       #---------------------------------------------------------------
+      # ==== AFTER OIDC LOGIN, ADD USERS AUTOMATICALLY TO THIS BOARD ID ====
+      # https://github.com/wekan/wekan/pull/5098
+      #- DEFAULT_BOARD_ID=abcd1234
+      #---------------------------------------------------------------
       # ==== WEKAN API AND EXPORT BOARD ====
       # Wekan Export Board works when WITH_API=true.
       # https://github.com/wekan/wekan/wiki/REST-API
@@ -279,8 +291,8 @@ services:
       #---------------------------------------------------------------
       # ==== Allow to shrink attached/pasted image ====
       # https://github.com/wekan/wekan/pull/2544
-      #-MAX_IMAGE_PIXEL=1024
-      #-IMAGE_COMPRESS_RATIO=80
+      #- MAX_IMAGE_PIXEL=1024
+      #- IMAGE_COMPRESS_RATIO=80
       #---------------------------------------------------------------
       # ==== NOTIFICATION TRAY AFTER READ DAYS BEFORE REMOVE =====
       # Number of days after a notification is read before we remove it.
@@ -473,6 +485,7 @@ services:
       # Note: Do not add single quotes '' to variables. Having spaces still works without quotes where required.
       #
       # The default authentication method used if a user does not exist to create and authenticate. Can be set as ldap.
+      # (this is set properly in the Admin Panel, changing this item does not remove Password login option)
       #- DEFAULT_AUTHENTICATION_METHOD=ldap
       #
       # Enable or not the connection by the LDAP
@@ -560,7 +573,7 @@ services:
       # At which interval does the background task sync.
       # The format must be as specified in:
       # https://bunkat.github.io/later/parsers.html#text
-      #- LDAP_BACKGROUND_SYNC_INTERVAL='every 1 hour'
+      #- LDAP_BACKGROUND_SYNC_INTERVAL=every 1 hour
       #
       #- LDAP_BACKGROUND_SYNC_KEEP_EXISTANT_USERS_UPDATED=false
       #

@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 ubuntu:22.04 as wekan
+FROM --platform=linux/amd64 ubuntu:23.04 as wekan
 LABEL maintainer="wekan"
 
 # 2022-09-04:
@@ -21,8 +21,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ENV BUILD_DEPS="apt-utils libarchive-tools gnupg gosu wget curl bzip2 g++ build-essential git ca-certificates python3" \
     DEBUG=false \
-    NODE_VERSION=v14.20.1 \
-    METEOR_RELEASE=2.7.3 \
+    NODE_VERSION=v14.21.4 \
+    METEOR_RELEASE=METEOR@2.13 \
     USE_EDGE=false \
     METEOR_EDGE=1.5-beta.17 \
     NPM_VERSION=latest \
@@ -31,6 +31,7 @@ ENV BUILD_DEPS="apt-utils libarchive-tools gnupg gosu wget curl bzip2 g++ build-
     SRC_PATH=./ \
     WITH_API=true \
     RESULTS_PER_PAGE="" \
+    DEFAULT_BOARD_ID="" \
     ACCOUNTS_LOCKOUT_KNOWN_USERS_FAILURES_BEFORE=3 \
     ACCOUNTS_LOCKOUT_KNOWN_USERS_PERIOD=60 \
     ACCOUNTS_LOCKOUT_KNOWN_USERS_FAILURE_WINDOW=15 \
@@ -43,7 +44,7 @@ ENV BUILD_DEPS="apt-utils libarchive-tools gnupg gosu wget curl bzip2 g++ build-
     ATTACHMENTS_UPLOAD_MAX_SIZE=0 \
     AVATARS_UPLOAD_EXTERNAL_PROGRAM="" \
     AVATARS_UPLOAD_MIME_TYPES="" \
-    AVATARS_UPLOAD_MAX_SIZE=0 \
+    AVATARS_UPLOAD_MAX_SIZE=72000 \
     RICHER_CARD_COMMENT_EDITOR=false \
     CARD_OPENED_WEBHOOK_ENABLED=false \
     MAX_IMAGE_PIXEL="" \
@@ -157,8 +158,10 @@ ENV BUILD_DEPS="apt-utils libarchive-tools gnupg gosu wget curl bzip2 g++ build-
     SAML_ATTRIBUTES="" \
     ORACLE_OIM_ENABLED=false \
     WAIT_SPINNER="" \
-    NODE_OPTIONS="--max_old_space_size=4096" \
-    WRITABLE_PATH=/data
+    WRITABLE_PATH=/data \
+    S3=""
+
+#   NODE_OPTIONS="--max_old_space_size=4096" \
 
 #---------------------------------------------
 # == at docker-compose.yml: AUTOLOGIN WITH OIDC/OAUTH2 ====
@@ -183,13 +186,17 @@ RUN \
     ln -sf $(which bsdtar) $(which tar) && \
     \
     # Download nodejs
-    wget https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz && \
-    wget https://nodejs.org/dist/${NODE_VERSION}/SHASUMS256.txt.asc && \
+    wget https://github.com/wekan/node-v14-esm/releases/download/${NODE_VERSION}/node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz && \
+    wget https://github.com/wekan/node-v14-esm/releases/download/${NODE_VERSION}/SHASUMS256.txt && \
+    #wget https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz && \
+    #wget https://nodejs.org/dist/${NODE_VERSION}/SHASUMS256.txt.asc && \
     #---------------------------------------------------------------------------------------------
     \
     # Verify nodejs authenticity
-    grep ${NODE_VERSION}-${ARCHITECTURE}.tar.gz SHASUMS256.txt.asc | shasum -a 256 -c - && \
-    rm -f SHASUMS256.txt.asc && \
+    grep node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz SHASUMS256.txt | shasum -a 256 -c - && \
+    rm -f SHASUMS256.txt && \
+    #grep ${NODE_VERSION}-${ARCHITECTURE}.tar.gz SHASUMS256.txt.asc | shasum -a 256 -c - && \
+    #rm -f SHASUMS256.txt.asc && \
     \
     # Install Node
     tar xvzf node-${NODE_VERSION}-${ARCHITECTURE}.tar.gz && \
@@ -269,4 +276,5 @@ STOPSIGNAL SIGKILL
 #
 # CMD ["node", "/build/main.js"]
 
-CMD ["bash", "-c", "ulimit -s 65500; exec node --stack-size=65500 /build/main.js"]
+#CMD ["bash", "-c", "ulimit -s 65500; exec node --stack-size=65500 /build/main.js"]
+CMD ["bash", "-c", "ulimit -s 65500; exec node /build/main.js"]

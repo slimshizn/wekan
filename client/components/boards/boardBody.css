@@ -19,6 +19,7 @@
 .board-wrapper .board-canvas.is-sibling-sidebar-open {
   margin-right: 248px;
 }
+.board-wrapper .board-canvas.overlayed {overflow:hidden}
 .board-wrapper .board-canvas .board-overlay {
   position: fixed;
   left: 0;
@@ -32,10 +33,11 @@
   animation: fadeIn 0.2s;
   z-index: 16;
 }
+.board-wrapper .board-canvas.is-dragging-active .open-minicard-composer,
 .board-wrapper .board-canvas.is-dragging-active .minicard-wrapper.is-checked {
   display: none;
 }
-@media screen and (max-width: 250px) {
+@media screen and (max-width: 800px) {
   .board-wrapper .board-canvas .swimlane {
     border-bottom: 1px solid #ccc;
     display: flex;
@@ -165,4 +167,59 @@
   background: #4b0082 !important;
   border-color: #2b004d;
   color: #fff !important;
+}
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+}
+.modal-dialog {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 25%; /* Adjust the height to make it smaller */
+  position: relative;
+  margin: 10% auto; /* This margin will help center the modal vertically */
+  max-width: 400px; /* Adjust the max-width to make it smaller */
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+.modal-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 1px;
+  border-bottom: 1px solid #ccc;
+}
+.modal-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  font-size: 18px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 4px;
+  border-top: 1px solid #ccc;
+}
+.close {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 25px;
+  cursor: pointer;
 }

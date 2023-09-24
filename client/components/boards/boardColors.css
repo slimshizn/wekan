@@ -782,9 +782,11 @@
   background-color: rgba(255,255,255,0.3) !important;
 }
 .board-color-dark .list >.list-header,
+/* Comment out, fixed white swimlane text not visible https://github.com/wekan/wekan/issues/4451
 .board-color-dark .swimlane-header {
   color: rgba(255,255,255,0.7);
 }
+*/
 .board-color-dark .minicard-wrapper.is-selected .minicard,
 .board-color-dark .minicard:hover,
 .board-color-dark .minicard-composer.js-composer,
@@ -1403,7 +1405,7 @@
   background: rgba(255,255,255,0.2);
 }
 .board-color-modern#header #header-main-bar h1 {
-  font-family: Poppins;
+/*  font-family: Poppins; */
   font-weight: bold;
 }
 .board-color-modern#header-quick-access #header-user-bar {
@@ -1430,13 +1432,13 @@
   background: none;
 }
 .board-color-modern .swimlane .swimlane-header-wrap .swimlane-header {
-  font-family: Poppins;
+  /* font-family: Poppins; */
 }
 .board-color-modern .board-list .board-list-item {
   padding: 20px;
 }
 .board-color-modern .board-list-item-name {
-  font-family: Poppins;
+  /* font-family: Poppins; */
 }
 .board-color-modern .list {
   background: transparent;
@@ -1464,7 +1466,7 @@
   background: none;
 }
 .board-color-modern .list-header .list-header-name {
-  font-family: Poppins;
+  /* font-family: Poppins; */
   color: #000;
   font-weight: 500;
 }
@@ -1493,7 +1495,7 @@
   padding: 3px 5px;
 }
 .board-color-modern .header-title {
-  font-family: Poppins;
+  /* font-family: Poppins; */
   font-size: 16px;
   color: #333;
 }
@@ -1509,7 +1511,7 @@
   background: #eee;
 }
 .board-color-modern .pop-over .header .header-title {
-  font-family: Poppins;
+  /* font-family: Poppins; */
   font-size: 16px;
   color: #333;
 }
@@ -1547,7 +1549,7 @@
   background: #eee;
 }
 .board-color-modern .board-color-modern section#notifications-drawer .header h5 {
-  font-family: Poppins;
+  /* font-family: Poppins; */
   font-weight: bold;
 }
 .board-color-modern .board-color-modern section#notifications-drawer .header .close {
@@ -1593,6 +1595,11 @@
   background: #262626;
   color: #fff;
 }
+@media screen and (min-width: 801px) {
+  .board-color-moderndark .js-toggle-desktop-drag-handles {
+    padding-top: 6px
+  }
+}
 .board-color-moderndark#header #header-main-bar .board-header-btn.emphasis {
   background: #2a2a2a;
 }
@@ -1626,6 +1633,9 @@
   .board-color-moderndark.pop-over .header {
     background: #2a2a2a;
     color: #fff;
+  }
+  #header.board-color-moderndark #header-main-bar .board-header-btn i.fa {
+    margin: 0 8px;
   }
 }
 .board-color-moderndark#header ul li.current,
@@ -1702,7 +1712,6 @@
   background: rgba(255,255,255,0.2);
 }
 .board-color-moderndark#header #header-main-bar h1 {
-  font-family: Poppins;
   font-weight: bold;
   line-height: 0.8em;
   padding-top: 10px;
@@ -1714,9 +1723,6 @@
   background-color: #494949;
   color: #ccc;
   padding: 4px 0;
-}
-.board-color-moderndark .swimlane .swimlane-header-wrap .swimlane-header {
-  font-family: Poppins;
 }
 .board-color-moderndark .swimlane .swimlane-header-wrap .swimlane-header-menu {
   padding: 6px;
@@ -1734,10 +1740,19 @@
   background: #666;
   border-radius: 0;
   border: 0px solid #666;
-  flex: 0 0 265px;
 }
 .board-color-moderndark .swimlane .list:first-child {
-  margin-left: 0;
+  color: #eee;
+  min-width: 20px;
+  margin-left: 0px;
+  border-left: none;
+}
+.board-color-moderndark .swimlane .list-composer .list-header-add .inlined-form .edit-controls .quiet,
+.board-color-moderndark .swimlane .list-composer .list-header-add .inlined-form .edit-controls .quiet a.js-list-template {
+  color: #eee;
+}
+.board-color-moderndark .swimlane .list:nth-child {
+  flex: 0 0 265px;
 }
 .board-color-moderndark .swimlane .list:nth-child(even) .list-header,
 .board-color-moderndark .swimlane .list:nth-child(even) .list-body {
@@ -1757,6 +1772,19 @@
 .board-color-moderndark .minicard {
   line-height: 14px;
   color: #eee;
+}
+@media screen and (max-width: 800px) {
+  .board-color-moderndark .list-header .list-header-name {
+    line-height: 40px;
+  }
+}
+@media screen and (min-width: 801px) {
+  .board-color-moderndark .list-header .list-header-name {
+    float: left;
+  }
+  .board-color-moderndark .list-header .list-header-menu {
+    padding: 0 10px 10px;
+  }
 }
 .board-color-moderndark .list-header .list-header-menu {
   padding: 10px;
@@ -1792,6 +1820,7 @@
 .board-color-moderndark .list .list-composer .open-list-composer i {
   color: #bbb;
 }
+.board-color-moderndark .swimlane .list:first-child .open-list-composer:hover i,
 .board-color-moderndark .list-body a.open-minicard-composer:hover,
 .board-color-moderndark .list-body a.open-minicard-composer:hover i,
 .board-color-moderndark .list .list-composer .open-list-composer:hover i {
@@ -1815,19 +1844,20 @@
   background-color: #4d4d4d !important;
 }
 .board-color-moderndark .minicard .minicard-labels {
-  margin-bottom: 4px;
+  margin: 8px 0 4px;
 }
 .board-color-moderndark .minicard .card-label {
   font-size: 11px;
   font-weight: 400;
   padding: 1px 6px 0;
   border-radius: 2px;
+  line-height: 18px;
 }
 .board-color-moderndark .minicard .badges {
   color: #bbb;
 }
 .board-color-moderndark .minicard .date {
-  margin-top: 10px;
+  margin-bottom: 10px;
   font-size: 11px;
 }
 .board-color-moderndark .card-date {
@@ -1855,6 +1885,15 @@
 @media screen and (max-width: 800px) {
   .board-color-moderndark .card-details {
     width: 98%;
+  }
+  .card-details-popup {
+    padding: 0px;
+  }
+  .card-details-left, .card-details-right {
+    padding: 0px 10px;
+  }
+  .card-details .card-details-header .card-details-menu-mobile-web {
+    margin-right: 0;
   }
 }
 @media screen and (min-width: 801px) {
@@ -1947,7 +1986,7 @@
   background-color: #ccc;
   color: #222;
 }
-.board-color-moderndark .attachments-galery .attachment-item {
+.board-color-moderndark .attachments-gallery .attachment-item {
   color: #222;
 }
 .board-color-moderndark .minicard-description {
@@ -1963,7 +2002,7 @@
   background-color: #333;
 }
 .pop-over.board-color-moderndark .header-title {
-  font-family: Poppins;
+  /* font-family: Poppins; */
   font-size: 16px;
   color: #ccc;
 }
@@ -2045,12 +2084,14 @@
 .board-color-exodark body {
   background: #222;
 }
+/* Uncomment to fix change color selected checkmark not visible
 .board-color-exodark i {
-  color: #00897b !important;
+  color: #fff !important;
 }
+*/
 .board-color-exodark .board-canvas {
   background: #222;
-  font-family: Poppins;
+  /* font-family: Poppins; */
 }
 .board-color-exodark .swimlane {
   background: #222;
@@ -2117,10 +2158,10 @@
 .board-color-exodark .sidebar-content {
   box-shadow: 0 0 7px 0 #00897b;
 }
-.board-color-exodark .attachments-galery .attachment-item {
+.board-color-exodark .attachments-gallery .attachment-item {
   background: #2b2b2b;
 }
-.board-color-exodark .attachments-galery .attachment-item:hover {
+.board-color-exodark .attachments-gallery .attachment-item:hover {
   border: 1px solid #00897b;
   background: #2b2b2b;
 }
@@ -2147,9 +2188,12 @@
 .board-color-exodark h4,
 .board-color-exodark h5,
 .board-color-exodark h6,
-.board-color-exodark p,
-.board-color-exodark a,
-.board-color-exodark span {
+/* Below added .card-details > to p/a/span to fix white swimlane text not visible
+   https://github.com/wekan/wekan/issues/4451
+*/
+.board-color-exodark .card-details > p,
+.board-color-exodark .card-details > a,
+.board-color-exodark .card-details > span {
   color: #fff !important;
 }
 .board-color-exodark .activity-desc {
@@ -2164,7 +2208,7 @@
   border: 1px solid #00897b;
 }
 .board-color-exodark .toggle-switch:checked ~ .toggle-label {
-  background-color: #00897b !important;
+  background-color: #fff !important;
 }
 .pop-over.board-color-exodark {
   background: #2b2b2b;

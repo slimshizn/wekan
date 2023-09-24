@@ -7,9 +7,9 @@ import Actions from '../models/actions';
 import Activities from '../models/activities';
 import Announcements from '../models/announcements';
 import Attachments from '../models/attachments';
-import AttachmentsOld from '../models/attachments_old';
+//import AttachmentsOld from '../models/attachments_old';
 import Avatars from '../models/avatars';
-import AvatarsOld from '../models/avatars_old';
+//import AvatarsOld from '../models/avatars_old';
 import Boards from '../models/boards';
 import CardComments from '../models/cardComments';
 import Cards from '../models/cards';
@@ -1245,10 +1245,17 @@ Migrations.add('add-card-details-show-lists', () => {
   );
 });
 
+/*
 Migrations.add('migrate-attachments-collectionFS-to-ostrioFiles', () => {
+  Meteor.settings.public.ostrioFilesMigrationInProgress = "true";
   AttachmentsOld.find().forEach(function(fileObj) {
     const newFileName = fileObj.name();
     const storagePath = Attachments.storagePath({});
+    // OLD:
+    // const filePath = path.join(storagePath, `${fileObj._id}-${newFileName}`);
+    // NEW: Save file only with filename of ObjectID, not including filename.
+    // Fixes https://github.com/wekan/wekan/issues/4416#issuecomment-1510517168
+    //const filePath = path.join(storagePath, `${fileObj._id}`);
     const filePath = path.join(storagePath, `${fileObj._id}-${newFileName}`);
 
     // This is "example" variable, change it to the userId that you might be using.
@@ -1280,6 +1287,9 @@ Migrations.add('migrate-attachments-collectionFS-to-ostrioFiles', () => {
             cardId: fileObj.cardId,
             listId: fileObj.listId,
             swimlaneId: fileObj.swimlaneId,
+            uploadedBeforeMigration: fileObj.uploadedAt,
+            migrationTime: new Date(),
+            copies: fileObj.copies,
             source: 'import'
           },
           userId,
@@ -1306,12 +1316,19 @@ Migrations.add('migrate-attachments-collectionFS-to-ostrioFiles', () => {
 
     readStream.pipe(writeStream);
   });
+  Meteor.settings.public.ostrioFilesMigrationInProgress = "false";
 });
 
 Migrations.add('migrate-avatars-collectionFS-to-ostrioFiles', () => {
+  Meteor.settings.public.ostrioFilesMigrationInProgress = "true";
   AvatarsOld.find().forEach(function(fileObj) {
     const newFileName = fileObj.name();
     const storagePath = Avatars.storagePath({});
+    // OLD:
+    // const filePath = path.join(storagePath, `${fileObj._id}-${newFileName}`);
+    // NEW: Save file only with filename of ObjectID, not including filename.
+    // Fixes https://github.com/wekan/wekan/issues/4416#issuecomment-1510517168
+    //const filePath = path.join(storagePath, `${fileObj._id}`);
     const filePath = path.join(storagePath, `${fileObj._id}-${newFileName}`);
 
     // This is "example" variable, change it to the userId that you might be using.
@@ -1361,14 +1378,16 @@ Migrations.add('migrate-avatars-collectionFS-to-ostrioFiles', () => {
                 'original',
                 '/',
               );
-              if (user.profile.avatarUrl.startsWith(old_url)) {
-                // Set avatar url to new url
-                Users.direct.update(
-                  { _id: user._id },
-                  { $set: { 'profile.avatarUrl': new_url } },
-                  noValidate,
-                );
-                console.log('User avatar updated: ', user._id, new_url);
+              if (user.profile.avatarUrl !== undefined) {
+                if (user.profile.avatarUrl.startsWith(old_url)) {
+                  // Set avatar url to new url
+                  Users.direct.update(
+                    { _id: user._id },
+                    { $set: { 'profile.avatarUrl': new_url } },
+                    noValidate,
+                  );
+                  console.log('User avatar updated: ', user._id, new_url);
+                }
               }
             });
             fileObj.remove();
@@ -1384,7 +1403,9 @@ Migrations.add('migrate-avatars-collectionFS-to-ostrioFiles', () => {
 
     readStream.pipe(writeStream);
   });
+  Meteor.settings.public.ostrioFilesMigrationInProgress = "false";
 });
+*/
 
 Migrations.add('migrate-attachment-drop-index-cardId', () => {
   try {
@@ -1401,3 +1422,22 @@ Migrations.add('migrate-attachment-migration-fix-source-import', () => {
     noValidateMulti
   );
 });
+
+/*
+Migrations.add('attachment-cardCopy-fix-boardId-etc', () => {
+  Attachments.find( {"meta.source": "copy"} ).forEach(_attachment => {
+    const cardId = _attachment.meta.cardId;
+    const card = Cards.findOne(cardId);
+    if (card.boardId !== undefined && card.listId !== undefined && card.swimlaneId !== undefined) {
+      console.log("update attachment id: ", _attachment._id);
+      Attachments.update(_attachment._id, {
+        $set: {
+          "meta.boardId": card.boardId,
+          "meta.listId": card.listId,
+          "meta.swimlaneId": card.swimlaneId,
+        }
+      });
+    }
+  });
+});
+*/
